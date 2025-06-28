@@ -1,3 +1,5 @@
+import logging
+import os
 import sys
 
 from AppKit import NSWorkspace
@@ -15,6 +17,21 @@ from PyQt6.QtWidgets import QSlider
 from PyQt6.QtWidgets import QSystemTrayIcon
 from PyQt6.QtWidgets import QVBoxLayout
 from PyQt6.QtWidgets import QWidget
+
+# Configure logging
+APP_NAME = "FocusView"
+LOG_DIR = os.path.expanduser(f"~/.logs/{APP_NAME}")
+LOG_FILE = os.path.join(LOG_DIR, f"{APP_NAME}.log")
+
+os.makedirs(LOG_DIR, exist_ok=True)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler(LOG_FILE), logging.StreamHandler(sys.stdout)],
+)
+
+logger = logging.getLogger(__name__)
 
 
 class Overlay(QWidget):
@@ -62,12 +79,14 @@ class SettingsDialog(QDialog):
 
 def get_active_window():
     app = NSWorkspace.sharedWorkspace().activeApplication()
-    return app.get("NSApplicationName") if app else ""
+    active_window_name = app.get("NSApplicationName") if app else ""
+    logger.info(f"Active window: {active_window_name}")
+    return active_window_name
 
 
 def check_accessibility():
     if not AXIsProcessTrusted():
-        print("Enable Accessibility in System Settings > Privacy & Security.")
+        logger.info("Enable Accessibility in System Settings > Privacy & Security.")
         return False
     return True
 
@@ -82,7 +101,7 @@ class HazeOverApp:
         self.setup_timer()
 
     def setup_tray(self):
-        self.tray = QSystemTrayIcon(QIcon("icon.png"))  # Replace with your icon
+        self.tray = QSystemTrayIcon(QIcon("assets/icon.png"))
         menu = QMenu()
         menu.addAction("Toggle Dimming", self.toggle_dimming)
         menu.addAction("Settings", self.show_settings)
