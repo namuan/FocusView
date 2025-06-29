@@ -1,4 +1,7 @@
-# FocusView
+<p align="center">
+  <img src="https://github.com/namuan/FocusView/raw/main/assets/icon.png" width="128px"/>
+</p>
+<h1 align="center">FocusView</h1>
 
 A macOS app that dims inactive windows to highlight the active one, similar to HazeOver. Built with Python and PyQt6, it supports multiple monitors and includes fade animations.
 
