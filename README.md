@@ -3,15 +3,7 @@
 </p>
 <h1 align="center">FocusView</h1>
 
-A macOS app that dims inactive windows to highlight the active one, similar to HazeOver. Built with Python and PyQt6, it supports multiple monitors and includes fade animations.
-
-## Features
-- Dims inactive windows with transparent overlays
-- System tray for toggling dimming and settings
-- Adjust dimming opacity via settings dialog
-- Smooth fade-in/out animations
-- Multi-monitor support
-- Accessibility permission check
+A macOS app that highlights the active window with a customizable border. Built with Python and PyQt6, it helps you keep track of the focused window, especially on large or multiple displays.
 
 ## Requirements
 - macOS 10.15 or later
