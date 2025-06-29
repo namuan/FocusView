@@ -13,7 +13,7 @@ A macOS app that highlights the active window with a customizable border. Built 
 1. Clone the repository:
    ```bash
    git clone https://github.com/namuan/FocusView.git
-   cd hazeover-clone
+   cd FocusView
    ```
 2. Install dependencies:
 
@@ -29,11 +29,6 @@ A macOS app that highlights the active window with a customizable border. Built 
    make run
    ```
 2. Grant Accessibility permissions in System Settings > Privacy & Security.
-3. Use the system tray icon to:
-    Toggle dimming
-    Open settings to adjust opacity
-    Quit the app
-
 
 ## License
 
