@@ -38,14 +38,15 @@ logger = logging.getLogger(__name__)
 
 
 class BorderOverlay(QWidget):
-    def __init__(self, geometry):
+    def __init__(self, screen_geometry):
         super().__init__()
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setGeometry(geometry)
+        self.screen_geometry = screen_geometry
+        self.setGeometry(screen_geometry)
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -131,7 +132,7 @@ class FocusViewApp:
     def setup_overlays(self):
         for screen in QApplication.screens():
             border_overlay = BorderOverlay(screen.geometry())
-            self.border_overlays.append(border_overlay)
+            self.border_overlays.append({"overlay": border_overlay, "screen": screen})
 
     def setup_timer(self):
         self.timer = QTimer()
@@ -140,6 +141,7 @@ class FocusViewApp:
 
     def update_overlays(self):
         active_window_geometry_dict = get_active_window_geometry()
+        active_window_rect = None
         if active_window_geometry_dict:
             active_window_rect = QRect(
                 active_window_geometry_dict["x"],
@@ -147,12 +149,23 @@ class FocusViewApp:
                 active_window_geometry_dict["width"],
                 active_window_geometry_dict["height"],
             )
-        else:
-            active_window_rect = None
 
-        for border_overlay in self.border_overlays:
-            if active_window_rect:
-                border_overlay.setGeometry(active_window_rect)
+        for border_info in self.border_overlays:
+            border_overlay = border_info["overlay"]
+            screen = border_info["screen"]
+            screen_rect = screen.geometry()
+
+            if active_window_rect and screen_rect.intersects(active_window_rect):
+                # Calculate the intersection of the active window and the screen
+                intersection = screen_rect.intersected(active_window_rect)
+                # Adjust the geometry relative to the screen's top-left corner
+                adjusted_geometry = QRect(
+                    intersection.x() - screen_rect.x(),
+                    intersection.y() - screen_rect.y(),
+                    intersection.width(),
+                    intersection.height(),
+                )
+                border_overlay.setGeometry(adjusted_geometry)
                 border_overlay.show()
             else:
                 border_overlay.hide()
@@ -161,7 +174,8 @@ class FocusViewApp:
         logger.info("Cleaning up resources...")
         if self.timer:
             self.timer.stop()
-        for overlay in self.border_overlays:
+        for border_info in self.border_overlays:
+            overlay = border_info["overlay"]
             overlay.hide()
             overlay.deleteLater()
         if self.tray:
