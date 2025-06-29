@@ -21,6 +21,8 @@ from Quartz import CGWindowListCopyWindowInfo
 from Quartz import kCGNullWindowID
 from Quartz import kCGWindowListOptionOnScreenOnly
 
+DEBOUNCE_DELAY = 150
+
 # Configure logging
 APP_NAME = "FocusView"
 LOG_DIR = os.path.expanduser(f"~/.logs/{APP_NAME}")
@@ -174,7 +176,7 @@ class FocusViewApp:
             # If there's an active window, start the timer to show the border
             # after a short period of inactivity.
             if current_rect:
-                self.debounce_timer.start(150)  # 150ms delay
+                self.debounce_timer.start(DEBOUNCE_DELAY)  # 150ms delay
 
     def show_border_at_final_position(self):
         # This method is called only when the window has stopped moving
