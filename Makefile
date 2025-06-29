@@ -22,7 +22,7 @@ package: clean pre-commit ## Run installer
 	./venv/bin/pyinstaller main.spec
 
 install-macosx: package ## Installs application in users Application folder
-	./scripts/install-macosx.sh CodeCompass.app
+	./scripts/install-macosx.sh FocusView.app
 
 run: ## Run application
 	./venv/bin/python3 main.py

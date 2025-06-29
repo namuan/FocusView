@@ -33,7 +33,7 @@ os.makedirs(LOG_DIR, exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.FileHandler(LOG_FILE), logging.StreamHandler(sys.stdout)],
+    handlers=[logging.FileHandler(LOG_FILE)],
 )
 
 logger = logging.getLogger(__name__)
@@ -80,7 +80,6 @@ def get_active_window_geometry():
             # Skip windows that are too small (e.g., tooltips, pop-ups)
             if bounds["Width"] < 50 or bounds["Height"] < 50:
                 continue
-            logger.info(f"Found window with bounds: {bounds}")
             return {
                 "x": int(bounds["X"]),
                 "y": int(bounds["Y"]),
@@ -88,7 +87,6 @@ def get_active_window_geometry():
                 "height": int(bounds["Height"]),
             }
 
-    logger.info(f"No window found for PID {pid}.")
     return None
 
 
