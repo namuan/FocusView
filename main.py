@@ -21,7 +21,7 @@ from Quartz import CGWindowListCopyWindowInfo
 from Quartz import kCGNullWindowID
 from Quartz import kCGWindowListOptionOnScreenOnly
 
-DEBOUNCE_DELAY = 150
+DEBOUNCE_DELAY = 200
 
 # Configure logging
 APP_NAME = "FocusView"
@@ -54,14 +54,6 @@ class BorderOverlay(QWidget):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setPen(QPen(QColor("red"), 8))
         painter.drawRect(self.rect())
-
-
-def fade_overlay(overlay, start, end, duration=200):
-    animation = QPropertyAnimation(overlay, b"windowOpacity")
-    animation.setStartValue(start)
-    animation.setEndValue(end)
-    animation.setDuration(duration)
-    animation.start()
 
 
 def get_active_window_geometry():
@@ -118,6 +110,7 @@ class FocusViewApp:
         # Timer to delay showing the border after a move/resize
         self.debounce_timer = QTimer()
         self.last_active_rect = None
+        self.animation = None  # Holds a reference to the current animation
 
         self.setup_signal_handler()
         self.setup_tray()
@@ -152,6 +145,15 @@ class FocusViewApp:
         # This timer will only fire once after a delay, to show the border
         self.debounce_timer.setSingleShot(True)
         self.debounce_timer.timeout.connect(self.show_border_at_final_position)
+
+    def fade_overlay(self, overlay, start, end, duration=200):
+        # We store the animation as an instance variable to prevent it
+        # from being garbage-collected prematurely.
+        self.animation = QPropertyAnimation(overlay, b"windowOpacity")
+        self.animation.setStartValue(start)
+        self.animation.setEndValue(end)
+        self.animation.setDuration(duration)
+        self.animation.start()
 
     def check_for_window_changes(self):
         active_window_geometry_dict = get_active_window_geometry()
@@ -188,7 +190,10 @@ class FocusViewApp:
         for screen, overlay in self.screen_overlays.items():
             if screen == active_screen:
                 overlay.setGeometry(self.last_active_rect)
+                # Start transparent, show the widget, then fade it in.
+                overlay.setWindowOpacity(0.0)
                 overlay.show()
+                self.fade_overlay(overlay, 0.0, 1.0, duration=500)
             else:
                 overlay.hide()
 
@@ -196,6 +201,8 @@ class FocusViewApp:
         logger.info("Cleaning up resources...")
         self.poll_timer.stop()
         self.debounce_timer.stop()
+        if self.animation:
+            self.animation.stop()
         for overlay in self.screen_overlays.values():
             overlay.hide()
             overlay.deleteLater()
