@@ -38,15 +38,14 @@ logger = logging.getLogger(__name__)
 
 
 class BorderOverlay(QWidget):
-    def __init__(self, screen_geometry):
+    def __init__(self, geometry):
         super().__init__()
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.screen_geometry = screen_geometry
-        self.setGeometry(screen_geometry)
+        self.setGeometry(geometry)
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -84,6 +83,9 @@ def get_active_window_geometry():
     for window in window_list:
         if window.get("kCGWindowOwnerPID") == pid:
             bounds = window.get("kCGWindowBounds")
+            # Skip windows that are too small (e.g., tooltips, pop-ups)
+            if bounds["Width"] < 50 or bounds["Height"] < 50:
+                continue
             logger.info(f"Found window with bounds: {bounds}")
             return {
                 "x": int(bounds["X"]),
@@ -106,7 +108,8 @@ def check_accessibility():
 class FocusViewApp:
     def __init__(self):
         self.app = QApplication(sys.argv)
-        self.border_overlays = []
+        # Use a dictionary to map screens to their overlays
+        self.screen_overlays = {}
         self.tray = None
         self.timer = None
         self.setup_signal_handler()
@@ -130,9 +133,10 @@ class FocusViewApp:
         self.tray.show()
 
     def setup_overlays(self):
+        # Create one overlay for each screen and store it in the dictionary
         for screen in QApplication.screens():
             border_overlay = BorderOverlay(screen.geometry())
-            self.border_overlays.append({"overlay": border_overlay, "screen": screen})
+            self.screen_overlays[screen] = border_overlay
 
     def setup_timer(self):
         self.timer = QTimer()
@@ -141,7 +145,7 @@ class FocusViewApp:
 
     def update_overlays(self):
         active_window_geometry_dict = get_active_window_geometry()
-        active_window_rect = None
+
         if active_window_geometry_dict:
             active_window_rect = QRect(
                 active_window_geometry_dict["x"],
@@ -149,33 +153,29 @@ class FocusViewApp:
                 active_window_geometry_dict["width"],
                 active_window_geometry_dict["height"],
             )
+            # Find which screen the active window is on
+            active_screen = QApplication.screenAt(active_window_rect.center())
 
-        for border_info in self.border_overlays:
-            border_overlay = border_info["overlay"]
-            screen = border_info["screen"]
-            screen_rect = screen.geometry()
-
-            if active_window_rect and screen_rect.intersects(active_window_rect):
-                # Calculate the intersection of the active window and the screen
-                intersection = screen_rect.intersected(active_window_rect)
-                # Adjust the geometry relative to the screen's top-left corner
-                adjusted_geometry = QRect(
-                    intersection.x() - screen_rect.x(),
-                    intersection.y() - screen_rect.y(),
-                    intersection.width(),
-                    intersection.height(),
-                )
-                border_overlay.setGeometry(adjusted_geometry)
-                border_overlay.show()
-            else:
-                border_overlay.hide()
+            # Iterate through all screens and their overlays
+            for screen, overlay in self.screen_overlays.items():
+                if screen == active_screen:
+                    # This is the correct screen, so position and show the overlay
+                    overlay.setGeometry(active_window_rect)
+                    overlay.show()
+                else:
+                    # This is not the screen with the active window, so hide the overlay
+                    overlay.hide()
+        else:
+            # No active window, so hide all overlays
+            for overlay in self.screen_overlays.values():
+                overlay.hide()
 
     def cleanup(self):
         logger.info("Cleaning up resources...")
         if self.timer:
             self.timer.stop()
-        for border_info in self.border_overlays:
-            overlay = border_info["overlay"]
+        # Clean up overlays from the dictionary
+        for overlay in self.screen_overlays.values():
             overlay.hide()
             overlay.deleteLater()
         if self.tray:
