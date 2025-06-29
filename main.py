@@ -10,12 +10,9 @@ from PyQt6.QtCore import QRect
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QColor
-from PyQt6.QtGui import QIcon
 from PyQt6.QtGui import QPainter
 from PyQt6.QtGui import QPen
 from PyQt6.QtWidgets import QApplication
-from PyQt6.QtWidgets import QMenu
-from PyQt6.QtWidgets import QSystemTrayIcon
 from PyQt6.QtWidgets import QWidget
 from Quartz import CGWindowListCopyWindowInfo
 from Quartz import kCGNullWindowID
@@ -101,7 +98,6 @@ class FocusViewApp:
     def __init__(self):
         self.app = QApplication(sys.argv)
         self.screen_overlays = {}
-        self.tray = None
 
         # Timer for polling window position
         self.poll_timer = QTimer()
@@ -111,7 +107,6 @@ class FocusViewApp:
         self.animation = None  # Holds a reference to the current animation
 
         self.setup_signal_handler()
-        self.setup_tray()
         self.setup_overlays()
         self.setup_timers()
 
@@ -122,13 +117,6 @@ class FocusViewApp:
         logger.info("Received interrupt signal, shutting down gracefully...")
         self.cleanup()
         sys.exit(0)
-
-    def setup_tray(self):
-        self.tray = QSystemTrayIcon(QIcon("assets/icon.png"))
-        menu = QMenu()
-        menu.addAction("Quit", self.cleanup)
-        self.tray.setContextMenu(menu)
-        self.tray.show()
 
     def setup_overlays(self):
         for screen in QApplication.screens():
@@ -204,9 +192,6 @@ class FocusViewApp:
         for overlay in self.screen_overlays.values():
             overlay.hide()
             overlay.deleteLater()
-        if self.tray:
-            self.tray.hide()
-            self.tray.deleteLater()
         self.app.quit()
 
     def run(self):
