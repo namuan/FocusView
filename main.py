@@ -108,14 +108,19 @@ def check_accessibility():
 class FocusViewApp:
     def __init__(self):
         self.app = QApplication(sys.argv)
-        # Use a dictionary to map screens to their overlays
         self.screen_overlays = {}
         self.tray = None
-        self.timer = None
+
+        # Timer for polling window position
+        self.poll_timer = QTimer()
+        # Timer to delay showing the border after a move/resize
+        self.debounce_timer = QTimer()
+        self.last_active_rect = None
+
         self.setup_signal_handler()
         self.setup_tray()
         self.setup_overlays()
-        self.setup_timer()
+        self.setup_timers()
 
     def setup_signal_handler(self):
         signal.signal(signal.SIGINT, self.handle_signal)
@@ -133,48 +138,62 @@ class FocusViewApp:
         self.tray.show()
 
     def setup_overlays(self):
-        # Create one overlay for each screen and store it in the dictionary
         for screen in QApplication.screens():
             border_overlay = BorderOverlay(screen.geometry())
             self.screen_overlays[screen] = border_overlay
 
-    def setup_timer(self):
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.update_overlays)
-        self.timer.start(100)
+    def setup_timers(self):
+        # This timer will constantly check the active window's geometry
+        self.poll_timer.timeout.connect(self.check_for_window_changes)
+        self.poll_timer.start(100)  # Poll every 100ms
 
-    def update_overlays(self):
+        # This timer will only fire once after a delay, to show the border
+        self.debounce_timer.setSingleShot(True)
+        self.debounce_timer.timeout.connect(self.show_border_at_final_position)
+
+    def check_for_window_changes(self):
         active_window_geometry_dict = get_active_window_geometry()
 
+        current_rect = None
         if active_window_geometry_dict:
-            active_window_rect = QRect(
+            current_rect = QRect(
                 active_window_geometry_dict["x"],
                 active_window_geometry_dict["y"],
                 active_window_geometry_dict["width"],
                 active_window_geometry_dict["height"],
             )
-            # Find which screen the active window is on
-            active_screen = QApplication.screenAt(active_window_rect.center())
 
-            # Iterate through all screens and their overlays
-            for screen, overlay in self.screen_overlays.items():
-                if screen == active_screen:
-                    # This is the correct screen, so position and show the overlay
-                    overlay.setGeometry(active_window_rect)
-                    overlay.show()
-                else:
-                    # This is not the screen with the active window, so hide the overlay
-                    overlay.hide()
-        else:
-            # No active window, so hide all overlays
+        # Check if the window has moved, resized, or changed focus
+        if current_rect != self.last_active_rect:
+            self.last_active_rect = current_rect
+
+            # Instantly hide all borders to prevent jitter/artifacts
             for overlay in self.screen_overlays.values():
+                overlay.hide()
+
+            # If there's an active window, start the timer to show the border
+            # after a short period of inactivity.
+            if current_rect:
+                self.debounce_timer.start(150)  # 150ms delay
+
+    def show_border_at_final_position(self):
+        # This method is called only when the window has stopped moving
+        if not self.last_active_rect:
+            return
+
+        active_screen = QApplication.screenAt(self.last_active_rect.center())
+
+        for screen, overlay in self.screen_overlays.items():
+            if screen == active_screen:
+                overlay.setGeometry(self.last_active_rect)
+                overlay.show()
+            else:
                 overlay.hide()
 
     def cleanup(self):
         logger.info("Cleaning up resources...")
-        if self.timer:
-            self.timer.stop()
-        # Clean up overlays from the dictionary
+        self.poll_timer.stop()
+        self.debounce_timer.stop()
         for overlay in self.screen_overlays.values():
             overlay.hide()
             overlay.deleteLater()
