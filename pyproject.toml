@@ -1,0 +1,106 @@
+[project]
+name = "focusview"
+version = "0.0.1"
+description = "A macOS app that highlights the active window with a customizable border. Built with Python and PyQt6, it helps you keep track of the focused window, especially on large or multiple displays."
+authors = [{ name = "Namuan", email = "namuan@deskriders.dev" }]
+readme = "README.md"
+keywords = ['python', 'meetings', 'productivity']
+requires-python = ">=3.10,<3.11"
+classifiers = [
+    "Intended Audience :: Developers",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "PyQt6",
+    "pyobjc",
+]
+
+[project.urls]
+Homepage = "https://namuan.github.io/meeting-buddy/"
+Repository = "https://github.com/namuan/meeting-buddy"
+Documentation = "https://namuan.github.io/meeting-buddy/"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest",
+    "pre-commit",
+    "tox-uv",
+    "ruff",
+    "pyinstaller",
+    "radon",
+    "xenon",
+]
+
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["main"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py39"
+line-length = 120
+fix = true
+
+[tool.ruff.lint]
+select = [
+    # flake8-2020
+    "YTT",
+    # flake8-bandit
+    "S",
+    # flake8-bugbear
+    "B",
+    # flake8-builtins
+    "A",
+    # flake8-comprehensions
+    "C4",
+    # flake8-debugger
+    "T10",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+    # mccabe
+    "C90",
+    # pycodestyle
+    "E", "W",
+    # pyflakes
+    "F",
+    # pygrep-hooks
+    "PGH",
+    # pyupgrade
+    "UP",
+    # ruff
+    "RUF",
+    # tryceratops
+    "TRY",
+]
+ignore = [
+    # LineTooLong
+    "E501",
+    # DoNotAssignLambda
+    "E731",
+    "TRY003",
+    "TRY300",
+    "TRY301",
+    "E741",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]
+
+[tool.ruff.format]
+preview = true
+
+[project.scripts]
+focus-view = "main:main"

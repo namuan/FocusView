@@ -6,29 +6,28 @@
 A macOS app that highlights the active window with a customizable border. Built with Python and PyQt6, it helps you keep track of the focused window, especially on large or multiple displays.
 
 ## Requirements
+
 - macOS 10.15 or later
 - Python 3.9 or later
 
 ## Installation
+
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/namuan/FocusView.git
    cd FocusView
    ```
-2. Install dependencies:
 
-    ```bash
-    make deps
-    ```
-
-## Usage
-
-1. Run the app:
+2. Setup application
 
    ```bash
-   make run
+   ./install.command
    ```
-2. Grant Accessibility permissions in System Settings > Privacy & Security.
+
+The application will be copied in ~/Applications folder.
+
+3. Grant Accessibility permissions in System Settings > Privacy & Security.
 
 ## License
 

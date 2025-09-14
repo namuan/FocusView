@@ -1,7 +1,24 @@
-venv/
-app.json
-models.conf
-crash.log
-uncompressed.py
-build/
-dist/
+# ignore all root items
+/*
+__pycache__/
+
+# unignore folders
+!assets/
+!scripts/
+!.trae/
+!docs/
+
+# unignore files
+!.gitignore
+!README.md
+!pyproject.toml
+!uv.lock
+!Makefile
+!install.command
+!.pre-commit-config.yaml
+!.editorconfig
+!LICENSE
+!tox.ini
+!main.spec
+!QWEN.md
+!run_app.py

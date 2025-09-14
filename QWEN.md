@@ -1,0 +1,1 @@
+/Users/nnn/workspace/focus-view/.trae/rules/project_rules.md

@@ -5,18 +5,10 @@ import sys
 
 from AppKit import NSWorkspace
 from HIServices import AXIsProcessTrusted
-from PyQt6.QtCore import QPropertyAnimation
-from PyQt6.QtCore import QRect
-from PyQt6.QtCore import Qt
-from PyQt6.QtCore import QTimer
-from PyQt6.QtGui import QColor
-from PyQt6.QtGui import QPainter
-from PyQt6.QtGui import QPen
-from PyQt6.QtWidgets import QApplication
-from PyQt6.QtWidgets import QWidget
-from Quartz import CGWindowListCopyWindowInfo
-from Quartz import kCGNullWindowID
-from Quartz import kCGWindowListOptionOnScreenOnly
+from PyQt6.QtCore import QPropertyAnimation, QRect, Qt, QTimer
+from PyQt6.QtGui import QColor, QPainter, QPen
+from PyQt6.QtWidgets import QApplication, QWidget
+from Quartz import CGWindowListCopyWindowInfo, kCGNullWindowID, kCGWindowListOptionOnScreenOnly
 
 DEBOUNCE_DELAY = 200
 
@@ -40,9 +32,7 @@ class BorderOverlay(QWidget):
     def __init__(self, geometry):
         super().__init__()
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-        self.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
-        )
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setGeometry(geometry)
 
@@ -64,9 +54,7 @@ def get_active_window_geometry():
         logger.info("No PID found for active application.")
         return None
 
-    window_list = CGWindowListCopyWindowInfo(
-        kCGWindowListOptionOnScreenOnly, kCGNullWindowID
-    )
+    window_list = CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly, kCGNullWindowID)
     if not window_list:
         logger.info("No windows found in window list.")
         return None
@@ -206,6 +194,10 @@ class FocusViewApp:
             sys.exit(0)
 
 
-if __name__ == "__main__":
+def main():
     app = FocusViewApp()
     app.run()
+
+
+if __name__ == "__main__":
+    main()

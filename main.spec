@@ -24,7 +24,7 @@ exe = EXE(pyz,
           strip=False,
           upx=True,
           console=False,
-          icon='assets\\icon.ico')
+          icon='assets/icon.ico')
 
 coll = COLLECT(exe,
                a.binaries,
@@ -44,5 +44,9 @@ app = BUNDLE(coll,
                 'CFBundleShortVersionString': '1.0.0',
                 'NSPrincipalClass': 'NSApplication',
                 'NSHighResolutionCapable': True,
+                'NSAppleEventsUsageDescription': 'FocusView needs access to control other applications to highlight the active window.',
+                'NSSystemAdministrationUsageDescription': 'FocusView needs system administration access to monitor window changes.',
+                'LSBackgroundOnly': False,
+                'LSApplicationCategoryType': 'public.app-category.productivity',
                 }
              )
