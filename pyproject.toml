@@ -26,8 +26,8 @@ Homepage = "https://namuan.github.io/meeting-buddy/"
 Repository = "https://github.com/namuan/meeting-buddy"
 Documentation = "https://namuan.github.io/meeting-buddy/"
 
-[dependency-groups.dev]
-dependencies = [
+[dependency-groups]
+dev = [
     "pytest",
     "pre-commit",
     "tox-uv",
