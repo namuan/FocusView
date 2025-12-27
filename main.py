@@ -4,7 +4,6 @@ import signal
 import sys
 
 from AppKit import NSWorkspace
-from HIServices import AXIsProcessTrusted
 from PyQt6.QtCore import QPropertyAnimation, QRect, Qt, QTimer
 from PyQt6.QtGui import QColor, QPainter, QPen
 from PyQt6.QtWidgets import QApplication, QWidget
@@ -73,13 +72,6 @@ def get_active_window_geometry():
             }
 
     return None
-
-
-def check_accessibility():
-    if not AXIsProcessTrusted():
-        logger.info("Enable Accessibility in System Settings > Privacy & Security.")
-        return False
-    return True
 
 
 class FocusViewApp:
@@ -183,9 +175,6 @@ class FocusViewApp:
         self.app.quit()
 
     def run(self):
-        if not check_accessibility():
-            logger.error("Accessibility permissions required. Exiting.")
-            return
         try:
             sys.exit(self.app.exec())
         except KeyboardInterrupt:
