@@ -4,17 +4,21 @@ import signal
 import sys
 
 from AppKit import NSWorkspace
-from PyQt6.QtCore import QPropertyAnimation, QRect, Qt, QTimer
-from PyQt6.QtGui import QColor, QPainter, QPen
-from PyQt6.QtWidgets import QApplication, QWidget
+from PyQt6.QtCore import QPropertyAnimation, QRect, QSettings, Qt, QTimer
+from PyQt6.QtGui import QAction, QColor, QIcon, QPainter, QPen
+from PyQt6.QtWidgets import QApplication, QColorDialog, QMenu, QSystemTrayIcon, QWidget
 from Quartz import CGWindowListCopyWindowInfo, kCGNullWindowID, kCGWindowListOptionOnScreenOnly
 
 DEBOUNCE_DELAY = 200
 
 # Configure logging
 APP_NAME = "FocusView"
+ORG_NAME = "FocusView"
 LOG_DIR = os.path.expanduser(f"~/.logs/{APP_NAME}")
 LOG_FILE = os.path.join(LOG_DIR, f"{APP_NAME}.log")
+
+# Default highlight color
+DEFAULT_HIGHLIGHT_COLOR = "#FF0000"
 
 os.makedirs(LOG_DIR, exist_ok=True)
 
@@ -28,17 +32,22 @@ logger = logging.getLogger(__name__)
 
 
 class BorderOverlay(QWidget):
-    def __init__(self, geometry):
+    def __init__(self, geometry, highlight_color="#FF0000"):
         super().__init__()
+        self.highlight_color = highlight_color
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setGeometry(geometry)
 
+    def set_highlight_color(self, color):
+        self.highlight_color = color
+        self.update()
+
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.setPen(QPen(QColor("red"), 8))
+        painter.setPen(QPen(QColor(self.highlight_color), 8))
         painter.drawRect(self.rect())
 
 
@@ -77,7 +86,13 @@ def get_active_window_geometry():
 class FocusViewApp:
     def __init__(self):
         self.app = QApplication(sys.argv)
+        self.app.setOrganizationName(ORG_NAME)
+        self.app.setApplicationName(APP_NAME)
         self.screen_overlays = {}
+
+        # Load settings
+        self.settings = QSettings()
+        self.highlight_color = self.settings.value("highlight_color", DEFAULT_HIGHLIGHT_COLOR)
 
         # Timer for polling window position
         self.poll_timer = QTimer()
@@ -89,6 +104,7 @@ class FocusViewApp:
         self.setup_signal_handler()
         self.setup_overlays()
         self.setup_timers()
+        self.setup_system_tray()
 
     def setup_signal_handler(self):
         signal.signal(signal.SIGINT, self.handle_signal)
@@ -100,8 +116,69 @@ class FocusViewApp:
 
     def setup_overlays(self):
         for screen in QApplication.screens():
-            border_overlay = BorderOverlay(screen.geometry())
+            border_overlay = BorderOverlay(screen.geometry(), self.highlight_color)
             self.screen_overlays[screen] = border_overlay
+
+    def setup_system_tray(self):
+        # Create system tray icon
+        self.tray_icon = QSystemTrayIcon(self.app)
+
+        # Create a simple icon (colored square)
+        from PyQt6.QtGui import QPixmap
+
+        pixmap = QPixmap(32, 32)
+        pixmap.fill(QColor(self.highlight_color))
+        self.tray_icon.setIcon(QIcon(pixmap))
+
+        # Create tray menu
+        tray_menu = QMenu()
+
+        # Change highlight color action
+        change_color_action = QAction("Change Highlight Color...", self.app)
+        change_color_action.triggered.connect(self.show_color_picker)
+        tray_menu.addAction(change_color_action)
+
+        tray_menu.addSeparator()
+
+        # Quit action
+        quit_action = QAction("Quit", self.app)
+        quit_action.triggered.connect(self.quit_app)
+        tray_menu.addAction(quit_action)
+
+        self.tray_icon.setContextMenu(tray_menu)
+        self.tray_icon.setToolTip("FocusView - Click to access options")
+        self.tray_icon.show()
+
+    def show_color_picker(self):
+        current_color = QColor(self.highlight_color)
+        color = QColorDialog.getColor(current_color, None, "Choose Highlight Color")
+
+        if color.isValid():
+            self.highlight_color = color.name()
+            self.save_highlight_color()
+            self.update_overlay_colors()
+            self.update_tray_icon()
+            logger.info(f"Highlight color changed to: {self.highlight_color}")
+
+    def save_highlight_color(self):
+        self.settings.setValue("highlight_color", self.highlight_color)
+        self.settings.sync()
+
+    def update_overlay_colors(self):
+        for overlay in self.screen_overlays.values():
+            overlay.set_highlight_color(self.highlight_color)
+
+    def update_tray_icon(self):
+        from PyQt6.QtGui import QPixmap
+
+        pixmap = QPixmap(32, 32)
+        pixmap.fill(QColor(self.highlight_color))
+        self.tray_icon.setIcon(QIcon(pixmap))
+
+    def quit_app(self):
+        logger.info("Quit requested from tray menu")
+        self.cleanup()
+        sys.exit(0)
 
     def setup_timers(self):
         # This timer will constantly check the active window's geometry
@@ -169,6 +246,8 @@ class FocusViewApp:
         self.debounce_timer.stop()
         if self.animation:
             self.animation.stop()
+        if hasattr(self, "tray_icon"):
+            self.tray_icon.hide()
         for overlay in self.screen_overlays.values():
             overlay.hide()
             overlay.deleteLater()
