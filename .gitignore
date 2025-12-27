@@ -22,3 +22,4 @@ __pycache__/
 !main.spec
 !QWEN.md
 !run_app.py
+!main.py

@@ -69,6 +69,14 @@ def get_active_window_geometry():
 
     for window in window_list:
         if window.get("kCGWindowOwnerPID") == pid:
+            # Skip windows that are not on the standard layer (0)
+            if window.get("kCGWindowLayer", 0) != 0:
+                continue
+
+            # Skip windows that are fully transparent
+            if window.get("kCGWindowAlpha", 1.0) == 0:
+                continue
+
             bounds = window.get("kCGWindowBounds")
             # Skip windows that are too small (e.g., tooltips, pop-ups)
             if bounds["Width"] < 50 or bounds["Height"] < 50:
@@ -105,6 +113,9 @@ class FocusViewApp:
         self.setup_overlays()
         self.setup_timers()
         self.setup_system_tray()
+
+        # Prevent app from exiting when the color picker (or last window) is closed
+        self.app.setQuitOnLastWindowClosed(False)
 
     def setup_signal_handler(self):
         signal.signal(signal.SIGINT, self.handle_signal)
