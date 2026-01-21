@@ -38,6 +38,7 @@ app = BUNDLE(coll,
              name='FocusView.app',
              icon='assets/icon.icns',
              bundle_identifier='com.github.namuan.focusview',
+             entitlements_file='entitlements.plist',
              info_plist={
                 'CFBundleName': 'FocusView',
                 'CFBundleVersion': '1.0.0',
@@ -45,6 +46,10 @@ app = BUNDLE(coll,
                 'NSPrincipalClass': 'NSApplication',
                 'NSHighResolutionCapable': True,
                 'LSBackgroundOnly': False,
+                'LSUIElement': False,
                 'LSApplicationCategoryType': 'public.app-category.productivity',
+                # Privacy permissions descriptions
+                'NSAppleEventsUsageDescription': 'FocusView needs to detect the active window to highlight it.',
+                'NSSystemAdministrationUsageDescription': 'FocusView needs to access window information to highlight the focused window.',
                 }
              )
