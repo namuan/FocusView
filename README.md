@@ -5,6 +5,8 @@
 
 A macOS app that highlights the active window with a customizable border. Built with Python and PyQt6, it helps you keep track of the focused window, especially on large or multiple displays.
 
+> NOTE: Superseeded by https://github.com/namuan/blurred
+ 
 ## Requirements
 
 - macOS 10.15 or later
